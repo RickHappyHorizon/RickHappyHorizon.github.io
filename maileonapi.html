@@ -1,123 +1,55 @@
 <!doctype html>
 <html lang="nl">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Zapier Store naar plain text</title>
+    <meta charset="utf-8">
+    <title>Zapier Store Data</title>
     <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; line-height: 1.45; }
-      h1 { font-size: 1.25rem; margin-bottom: 1rem; }
-      .status { margin: 0.5rem 0 1rem; font-size: 0.95rem; }
-      pre { white-space: pre-wrap; word-break: break-word; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; }
-      button { padding: 0.5rem 0.9rem; border: 1px solid #ccc; background: #f8f8f8; border-radius: 6px; cursor: pointer; }
-      button:disabled { opacity: 0.6; cursor: not-allowed; }
-      .row { margin: 0.5rem 0; }
-      label { display: block; font-size: 0.9rem; margin-bottom: 0.25rem; }
-      input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+      body {
+        font-family: monospace;
+        white-space: pre-wrap;
+        margin: 2rem;
+      }
     </style>
   </head>
   <body>
-    <h1>Zapier Storage data als plain text</h1>
-
-    <div class="row">
-      <label for="url">Endpoint URL</label>
-      <input id="url" type="text" value="https://store.zapier.com/api/records?secret=6251511b-743b-4031-83b3-b71e9929aee4" />
-    </div>
-
-    <div class="row">
-      <button id="load">Ophalen</button>
-      <span class="status" id="status"></span>
-    </div>
-
-    <pre id="output">Nog geen data opgehaald</pre>
-
     <script>
-      const statusEl = document.getElementById('status');
-      const outputEl = document.getElementById('output');
-      const urlEl = document.getElementById('url');
-      const btn = document.getElementById('load');
-
-      function toPlainText(data) {
-        // Converteer willekeurige JSON naar leesbare plain text
-        const seen = new WeakSet();
-        function walk(node, prefix = '') {
-          const lines = [];
-          const type = Object.prototype.toString.call(node);
-
-          if (node === null || node === undefined) {
-            lines.push(prefix + String(node));
-          } else if (typeof node === 'string' || typeof node === 'number' || typeof node === 'boolean') {
-            lines.push(prefix + String(node));
-          } else if (type === '[object Date]') {
-            lines.push(prefix + node.toISOString());
-          } else if (Array.isArray(node)) {
-            if (seen.has(node)) { lines.push(prefix + '[circular]'); return lines; }
-            seen.add(node);
-            if (node.length === 0) {
-              lines.push(prefix + '[]');
-            } else {
-              node.forEach((item, i) => {
-                const child = walk(item, prefix ? prefix + '[' + i + '] ' : '[' + i + '] ');
-                lines.push(...child);
-              });
-            }
-          } else if (typeof node === 'object') {
-            if (seen.has(node)) { lines.push(prefix + '{circular}'); return lines; }
-            seen.add(node);
-            const keys = Object.keys(node);
-            if (keys.length === 0) {
-              lines.push(prefix + '{}');
-            } else {
-              keys.forEach(k => {
-                const val = node[k];
-                if (typeof val !== 'object' || val === null) {
-                  lines.push((prefix ? prefix : '') + k + ': ' + String(val));
-                } else {
-                  const child = walk(val, (prefix ? prefix : '') + k + '.');
-                  lines.push(...child);
-                }
-              });
-            }
-          } else {
-            lines.push(prefix + String(node));
-          }
-          return lines;
-        }
-        return walk(data).join('\n');
-      }
-
-      async function fetchAndRender() {
-        const url = urlEl.value.trim();
-        if (!url) {
-          statusEl.textContent = 'Geen URL ingevuld';
-          return;
-        }
-        btn.disabled = true;
-        statusEl.textContent = 'Bezig met ophalen';
-        outputEl.textContent = '';
+      async function main() {
+        const url = 'https://store.zapier.com/api/records?secret=6251511b-743b-4031-83b3-b71e9929aee4';
+        document.body.textContent = 'Bezig met ophalen...';
 
         try {
-          const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-          if (!res.ok) {
-            throw new Error('HTTP ' + res.status + ' ' + res.statusText);
-          }
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
           const data = await res.json();
-          const text = toPlainText(data);
-          outputEl.textContent = text || 'Leeg resultaat';
-          statusEl.textContent = 'Klaar';
+
+          function toPlainText(obj, prefix = '') {
+            let out = '';
+            if (obj === null || typeof obj !== 'object') {
+              out += prefix + String(obj) + '\n';
+            } else if (Array.isArray(obj)) {
+              obj.forEach((v, i) => {
+                out += toPlainText(v, prefix + '[' + i + '] ');
+              });
+            } else {
+              for (const key in obj) {
+                const val = obj[key];
+                if (val !== null && typeof val === 'object') {
+                  out += toPlainText(val, prefix + key + '.');
+                } else {
+                  out += prefix + key + ': ' + String(val) + '\n';
+                }
+              }
+            }
+            return out;
+          }
+
+          document.body.textContent = toPlainText(data);
         } catch (err) {
-          outputEl.textContent = '';
-          statusEl.textContent = 'Fout bij ophalen';
-          const details = err && err.message ? err.message : 'Onbekende fout';
-          outputEl.textContent = 'Kon de data niet ophalen\n' + details + '\nControleer eventueel CORS en probeer opnieuw';
-        } finally {
-          btn.disabled = false;
+          document.body.textContent = 'Fout bij ophalen:\n' + err.message;
         }
       }
 
-      btn.addEventListener('click', fetchAndRender);
-      // Automatisch laden bij openen
-      fetchAndRender();
+      main();
     </script>
   </body>
 </html>
