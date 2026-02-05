@@ -255,11 +255,27 @@
         
         <div id="formContainer">
             <label for="email">E-mail:</label>
-            {{form name='new_lead' onsubmit='submitted()'}}
-            {{input name='emailaddress' id='email' title='+ symbol is not allowed in email addresses' type='email' field='customer.emailaddress' pattern='^([^@+]+@(?!(happyhorizon\.com)$)[^@]+|[^@]+(\+[^@]+)?@happyhorizon\.com)$' required='true' unique='true' inplugins='EMAIL_VALIDATION:"yes":"no"'}}
-            {{input name='form' type='hidden' value='' id='resultField' field='campaign_option.390.F11'}}
-            {{input name='verzend' id='send' onclick='sendForm()' type='submit' value='Send'}}
-            {{/form}}
+            <form name="new_lead" id="leadForm">
+                <input 
+                    type="email" 
+                    name="emailaddress" 
+                    id="email" 
+                    placeholder="jouw@email.nl"
+                    required
+                />
+                <input 
+                    type="hidden" 
+                    name="result" 
+                    value="" 
+                    id="resultField"
+                />
+                <input 
+                    type="submit" 
+                    name="verzend" 
+                    id="send" 
+                    value="Versturen"
+                />
+            </form>
         </div>
         
         <p class="success-message" id="successMessage">Bedankt voor je inzending!</p>
@@ -347,10 +363,10 @@
             }, 4000);
         });
 
-        // Form submit handler voor Smarty template
+        // Form submit handler
         document.addEventListener('submit', function(event) {
             const form = event.target;
-            if (form.name === 'new_lead') {
+            if (form.name === 'new_lead' || form.id === 'leadForm') {
                 event.preventDefault();
                 
                 // Controleer of het formulier valide is
@@ -394,15 +410,10 @@
                     }
                     successMessage.classList.add('show');
                     
-                    // Log de data (hier zou normaal de API call komen)
-                    console.log('Form submitted via Smarty');
+                    // Log de data
+                    console.log('Form submitted');
                     console.log('Email:', emailInput.value);
                     console.log('Result:', resultField ? resultField.value : 'unknown');
-                    
-                    // Roep de Smarty submitted functie aan
-                    if (typeof submitted === 'function') {
-                        submitted();
-                    }
                 })
                 .catch(function(error) {
                     console.log('Webhook sent (no-cors mode):', error);
@@ -412,23 +423,18 @@
                         formContainer.classList.add('hidden');
                     }
                     successMessage.classList.add('show');
-                    
-                    // Roep de Smarty submitted functie aan
-                    if (typeof submitted === 'function') {
-                        submitted();
-                    }
                 });
+                
+                return false;
             }
         });
         
-        // Functie voor sendForm() die aangeroepen wordt door Smarty
+        // Functie voor sendForm() (niet meer nodig maar behouden voor backwards compatibility)
         function sendForm() {
-            // Deze functie wordt aangeroepen door de onclick, maar de daadwerkelijke 
-            // submit wordt afgehandeld door de submit event listener hierboven
             return true;
         }
         
-        // Functie voor submitted() die aangeroepen wordt door Smarty
+        // Functie voor submitted() (niet meer nodig maar behouden voor backwards compatibility)
         function submitted() {
             console.log('Form submitted callback');
         }
