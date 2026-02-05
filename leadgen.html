@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin the Wheel Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: adx-primary, 'Helvetica Neue', helvetica, arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #FF6200 0%, #FF8C00 100%);
+        }
+
+        h1 {
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .wheel-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ff0000;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .wheel {
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+
+        .spin-button {
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #FF6200, #E55500);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #FF7300, #FF6200);
+        }
+
+        .spin-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .result-container.show {
+            display: flex;
+        }
+
+        .result-message {
+            color: #333;
+            font-size: 2rem;
+            text-align: center;
+            margin: 0;
+        }
+
+        #formContainer {
+            width: 100%;
+        }
+
+        #formContainer label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        #formContainer input[type="email"],
+        #formContainer input[name="emailaddress"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        #formContainer input[type="email"]:focus,
+        #formContainer input[name="emailaddress"]:focus {
+            outline: none;
+            border-color: #1E90FF;
+            box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
+        }
+
+        #formContainer input[type="submit"],
+        #formContainer input[name="verzend"] {
+            width: 100%;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #FF6200, #E55500);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        #formContainer input[type="submit"]:hover:not(:disabled),
+        #formContainer input[name="verzend"]:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 98, 0, 0.4);
+            background: linear-gradient(135deg, #FF7300, #FF6200);
+        }
+
+        #formContainer input[type="submit"]:disabled,
+        #formContainer input[name="verzend"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-verrijking {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .success-message {
+            color: #22c55e;
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-align: center;
+            margin: 0;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .wheel-wrapper {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .wheel {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .result-container {
+                padding: 2rem;
+            }
+            
+            .result-message {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Spin the Wheel!</h1>
+    
+    <div class="wheel-container" id="wheelContainer">
+        <div class="wheel-wrapper">
+            <div class="pointer"></div>
+            
+            <svg class="wheel" id="wheel" width="400" height="400" viewBox="0 0 400 400">
+                <circle cx="200" cy="200" r="198" fill="none" stroke="#333" stroke-width="4" />
+                
+                <!-- Segment 1 (Oranje) -->
+                <path d="M 200 200 L 200 5 A 195 195 0 0 1 395 200 Z" fill="#FF6200" stroke="#333" stroke-width="2" />
+                <text x="280" y="105" fill="white" font-size="48" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1</text>
+                
+                <!-- Segment 2 (Licht Oranje) -->
+                <path d="M 200 200 L 395 200 A 195 195 0 0 1 200 395 Z" fill="#FFA500" stroke="#333" stroke-width="2" />
+                <text x="280" y="295" fill="white" font-size="48" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2</text>
+                
+                <!-- Segment 3 (Oranje) -->
+                <path d="M 200 200 L 200 395 A 195 195 0 0 1 5 200 Z" fill="#FF6200" stroke="#333" stroke-width="2" />
+                <text x="120" y="295" fill="white" font-size="48" font-weight="bold" text-anchor="middle" dominant-baseline="middle">3</text>
+                
+                <!-- Segment 4 (Licht Oranje) -->
+                <path d="M 200 200 L 5 200 A 195 195 0 0 1 200 5 Z" fill="#FFA500" stroke="#333" stroke-width="2" />
+                <text x="120" y="105" fill="white" font-size="48" font-weight="bold" text-anchor="middle" dominant-baseline="middle">4</text>
+                
+                <circle cx="200" cy="200" r="30" fill="#333" />
+            </svg>
+        </div>
+        
+        <button class="spin-button" id="spinButton">Draai het rad!</button>
+    </div>
+    
+    <div class="result-container" id="resultContainer">
+        <h2 class="result-message" id="resultMessage"></h2>
+        
+        <div id="formContainer">
+            <label for="email">E-mail:</label>
+            {{form name='new_lead' onsubmit='submitted()'}}
+            {{input name='emailaddress' id='email' title='+ symbol is not allowed in email addresses' type='email' field='customer.emailaddress' pattern='^([^@+]+@(?!(happyhorizon\.com)$)[^@]+|[^@]+(\+[^@]+)?@happyhorizon\.com)$' required='true' unique='true' inplugins='EMAIL_VALIDATION:"yes":"no"'}}
+            {{input name='form' type='hidden' value='' id='resultField' field='campaign_option.390.F11'}}
+            {{input name='verzend' id='send' onclick='sendForm()' type='submit' value='Send'}}
+            {{/form}}
+        </div>
+        
+        <p class="success-message" id="successMessage">Bedankt voor je inzending!</p>
+    </div>
+
+    <script>
+        let isSpinning = false;
+        let currentRotation = 0;
+
+        const spinButton = document.getElementById('spinButton');
+        const wheel = document.getElementById('wheel');
+        const wheelContainer = document.getElementById('wheelContainer');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultMessage = document.getElementById('resultMessage');
+        const formContainer = document.getElementById('formContainer');
+        const successMessage = document.getElementById('successMessage');
+
+        spinButton.addEventListener('click', function() {
+            if (isSpinning) return;
+
+            isSpinning = true;
+            spinButton.disabled = true;
+            spinButton.textContent = 'Aan het draaien...';
+
+            // Gewogen kans systeem: 1/50 voor resultaat 1, 48/50 voor resultaat 3, 1/50 voor resultaat 4
+            // Resultaat 2 wordt nooit gekozen maar is wel zichtbaar op het rad
+            const randomNum = Math.floor(Math.random() * 50) + 1; // 1 tot 50
+            let result;
+            
+            if (randomNum === 1) {
+                result = 1; // 1/50 kans
+            } else if (randomNum === 50) {
+                result = 4; // 1/50 kans
+            } else {
+                result = 3; // 48/50 kans (2 t/m 49)
+            }
+
+            // Bereken rotatie
+            const spins = 5; // Aantal volle rondjes
+            const baseRotation = 360 * spins;
+            
+            // Bereken eindpositie op basis van resultaat
+            // Segment 1: 0-90 graden (bovenkant)
+            // Segment 2: 90-180 graden (rechts)
+            // Segment 3: 180-270 graden (onder)
+            // Segment 4: 270-360 graden (links)
+            let targetAngle;
+            switch(result) {
+                case 1:
+                    targetAngle = 45; // Midden van segment 1
+                    break;
+                case 2:
+                    targetAngle = 135; // Midden van segment 2 (wordt niet gebruikt)
+                    break;
+                case 3:
+                    targetAngle = 225; // Midden van segment 3
+                    break;
+                case 4:
+                    targetAngle = 315; // Midden van segment 4
+                    break;
+            }
+
+            // Het rad draait, dus we draaien naar 360 - targetAngle (omdat de pointer vast staat)
+            const finalRotation = currentRotation + baseRotation + (360 - targetAngle);
+            
+            wheel.style.transform = `rotate(${finalRotation}deg)`;
+            currentRotation = finalRotation;
+
+            // Na 4 seconden (animatieduur): toon resultaat
+            setTimeout(function() {
+                isSpinning = false;
+                spinButton.disabled = false;
+                spinButton.textContent = 'Draai het rad!';
+                
+                // Verberg het rad en toon het resultaat
+                wheelContainer.classList.add('hidden');
+                resultContainer.classList.add('show');
+                resultMessage.textContent = `Gefeliciteerd! Je hebt ${result} gedraaid!`;
+                
+                // Zet het resultaat in het hidden field
+                const resultField = document.getElementById('resultField');
+                if (resultField) {
+                    resultField.value = result;
+                }
+            }, 4000);
+        });
+
+        // Form submit handler voor Smarty template
+        document.addEventListener('submit', function(event) {
+            const form = event.target;
+            if (form.name === 'new_lead') {
+                event.preventDefault();
+                
+                // Controleer of het formulier valide is
+                const emailInput = document.getElementById('email');
+                if (!form.checkValidity() || !emailInput.checkValidity()) {
+                    // Toon de native browser validatie
+                    form.reportValidity();
+                    return false;
+                }
+                
+                // Als het formulier valide is, disable de button
+                const sendButton = document.getElementById('send');
+                if (sendButton) {
+                    sendButton.setAttribute('disabled', 'true');
+                }
+                
+                // Verzamel de formulier data
+                const resultField = document.getElementById('resultField');
+                const formData = {
+                    email: emailInput.value,
+                    result: resultField ? resultField.value : 'unknown',
+                    timestamp: new Date().toISOString(),
+                    game: 'spin-the-wheel'
+                };
+                
+                // Verstuur naar Zapier webhook
+                fetch('https://hooks.zapier.com/hooks/catch/16224718/ur31m4a/', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(function() {
+                    console.log('Data sent to webhook successfully');
+                    
+                    // Verberg het formulier en toon success bericht
+                    if (formContainer) {
+                        formContainer.classList.add('hidden');
+                    }
+                    successMessage.classList.add('show');
+                    
+                    // Log de data (hier zou normaal de API call komen)
+                    console.log('Form submitted via Smarty');
+                    console.log('Email:', emailInput.value);
+                    console.log('Result:', resultField ? resultField.value : 'unknown');
+                    
+                    // Roep de Smarty submitted functie aan
+                    if (typeof submitted === 'function') {
+                        submitted();
+                    }
+                })
+                .catch(function(error) {
+                    console.log('Webhook sent (no-cors mode):', error);
+                    
+                    // Verberg het formulier en toon success bericht (webhook is verstuurd)
+                    if (formContainer) {
+                        formContainer.classList.add('hidden');
+                    }
+                    successMessage.classList.add('show');
+                    
+                    // Roep de Smarty submitted functie aan
+                    if (typeof submitted === 'function') {
+                        submitted();
+                    }
+                });
+            }
+        });
+        
+        // Functie voor sendForm() die aangeroepen wordt door Smarty
+        function sendForm() {
+            // Deze functie wordt aangeroepen door de onclick, maar de daadwerkelijke 
+            // submit wordt afgehandeld door de submit event listener hierboven
+            return true;
+        }
+        
+        // Functie voor submitted() die aangeroepen wordt door Smarty
+        function submitted() {
+            console.log('Form submitted callback');
+        }
+    </script>
+</body>
+</html>
