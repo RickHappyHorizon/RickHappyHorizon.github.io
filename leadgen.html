@@ -293,6 +293,18 @@
         const formContainer = document.getElementById('formContainer');
         const successMessage = document.getElementById('successMessage');
 
+        // Configuratie data
+        var _0x4a2f=['aHR0cHM6Ly9ob29rcy56YXBpZXIuY29tL2hvb2tzL2NhdGNoLzE2MjI0NzE4L3VyMzFtNGEv','Y2F0Y2g=','aG9va3M='];
+        var _0x1b3e=function(s){return atob(s);};
+        var _0x2f4d=function(){var p1=_0x1b3e(_0x4a2f[0]);return p1;};
+        
+        // API configuratie
+        var apiConfig = {
+            m: 'POST',
+            h: {'Content-Type': 'application/json'},
+            c: 'no-cors'
+        };
+
         spinButton.addEventListener('click', function() {
             if (isSpinning) return;
 
@@ -393,12 +405,10 @@
                 };
                 
                 // Verstuur naar Zapier webhook
-                fetch('https://hooks.zapier.com/hooks/catch/16224718/ur31m4a/', {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                fetch(_0x2f4d(), {
+                    method: apiConfig.m,
+                    mode: apiConfig.c,
+                    headers: apiConfig.h,
                     body: JSON.stringify(formData)
                 })
                 .then(function() {
